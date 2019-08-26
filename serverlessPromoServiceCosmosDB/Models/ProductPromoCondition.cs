@@ -7,6 +7,7 @@ namespace serverlessPromoServiceCosmosDB.Models
 {
     public class ProductPromoCondition
     {
+        public string index { get; set; }
         public ProductPromoParameter parameter { get; set; }
 
         public ProductPromoOperator promoOperator { get; set; }

@@ -26,6 +26,7 @@ namespace serverlessPromoServiceCosmosDB.Models
         // [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public IEnumerable<ProductPromo> promotions { get; set; }
 
+        public List<ProductPromoCondition> conditions { get; set; }
 
         // [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         // [JsonProperty(PropertyName = "promotionId")]

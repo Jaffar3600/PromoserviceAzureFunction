@@ -11,6 +11,7 @@ using serverlessPromoServiceCosmosDB.Models;
 using System.Net.Http;
 using System.Net;
 using System.Text;
+using System.Linq;
 
 namespace serverlessPromoServiceCosmosDB.Funtions
 {
@@ -18,7 +19,7 @@ namespace serverlessPromoServiceCosmosDB.Funtions
     {
         [FunctionName("retrivepromo")]
         public static async Task<IActionResult> Run(
-             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "promotion/{id}")] HttpRequestMessage req,
+             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "promotion/{id}")] HttpRequestMessage req,
              [CosmosDB(
                 databaseName: "PromoDatabase",
                 collectionName: "PromoCollection",
@@ -28,46 +29,52 @@ namespace serverlessPromoServiceCosmosDB.Funtions
              ILogger log)
         {
             ResponseObject responseobject = new ResponseObject();
-            log.LogInformation($"Function triggered");
-
-           /* if (productpromo == null)
+            var header = req.Headers;
+            if (header.Contains("tenant"))
             {
-                log.LogInformation($"Item not found");
-                return new NotFoundObjectResult("Id not found in collection");
+                string value = header.GetValues("tenant").First();
+                if (value.Equals("dcp"))
+                {
+                   
+                    log.LogInformation($"Function triggered");
+
+
+                    try
+                    {
+                        // productpromo = result;
+                        responseobject.correlationalId = Guid.NewGuid().ToString();
+                        responseobject.statusCode = 200;
+                        responseobject.statusReason = "OK";
+                        responseobject.success = true;
+
+                        responseobject.promotion = productpromo;
+                        return new OkObjectResult(responseobject)
+                          /* {
+                               //StatusCode = new StringContent(responseobject.ToString(), Encoding.UTF8, "application/json")
+                           }*/;
+
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        responseobject.correlationalId = Guid.NewGuid().ToString();
+                        responseobject.statusCode = 500;
+                        responseobject.statusReason = "Internal Server Error";
+                        responseobject.success = false;
+                        return new OkObjectResult(responseobject);
+                    }
+
+                }
+                else
+                {
+                      return new OkObjectResult(responseobject);
+                }
             }
             else
             {
-                //log.LogInformation($"Found ToDo item {productpromo.Description}");
-                return new OkObjectResult(productpromo);
-            }*/
-            try
-            {
-               // productpromo = result;
-                responseobject.correlationalId = Guid.NewGuid().ToString();
-                responseobject.statusCode = 200;
-                responseobject.statusReason = "OK";
-                responseobject.success = true;
-
-                responseobject.promotion = productpromo;
-                return new OkObjectResult(responseobject)
-               /* {
-                    //StatusCode = new StringContent(responseobject.ToString(), Encoding.UTF8, "application/json")
-                }*/;
-
-
-
-            }
-            catch (Exception ex)
-            {
-                responseobject.correlationalId = Guid.NewGuid().ToString();
-                responseobject.statusCode = 500;
-                responseobject.statusReason = "Internal Server Error";
-                responseobject.success = false;
                 return new OkObjectResult(responseobject);
             }
-
-
-
         }
     }
 }

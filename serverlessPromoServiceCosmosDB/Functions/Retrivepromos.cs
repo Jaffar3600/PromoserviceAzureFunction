@@ -9,60 +9,28 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using serverlessPromoServiceCosmosDB.Models;
+using System.Net.Http;
+
+using System.Linq;
+using Microsoft.Azure.Documents.Client;
 
 namespace serverlessPromoServiceCosmosDB.Functions
 {
     public static class Retrivepromos
     {
-        /* [FunctionName("Retrivepromos")]
-         public static async Task<IActionResult> Run(
-             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-             ILogger log)
-         {
-             log.LogInformation("C# HTTP trigger function processed a request.");
-
-             string name = req.Query["name"];
-
-             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-             dynamic data = JsonConvert.DeserializeObject(requestBody);
-             name = name ?? data?.name;
-
-             return name != null
-                 ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                 : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
-         }*/
-
-
         [FunctionName("retrivepromos")]
         public static async Task<IActionResult> Run(
-           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "v1/promotions")] HttpRequest req,
+           [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "v1/promotions")] HttpRequestMessage req, HttpRequest request,
            [CosmosDB(
                 databaseName: "PromoDatabase",
                 collectionName: "PromoCollection",
                 ConnectionStringSetting = "CosmosDBConnection",
-                SqlQuery = "select * from PromoCollection")
+                SqlQuery = "select * from PromoCollection c where c.fromDate <= < udf.now()")
             ]IEnumerable<ProductPromo> productpromo,
            ILogger log)
         {
             ResponseObject responseobject = new ResponseObject();
-            /* log.LogInformation($"Function triggered");
 
-             if (productpromo == null)
-             {
-                 log.LogInformation($"No Todo items found");
-             }
-             else
-             {
-                 var ltodoitems = (List<ProductPromo>)productpromo;
-                 if (ltodoitems.Count == 0)
-                 {
-                     log.LogInformation($"No Todo items found");
-                 }
-                 else
-                 {
-                     log.LogInformation($"{ltodoitems.Count} Todo items found");
-                 }
-             }*/
             try
             {
                 responseobject.correlationalId = Guid.NewGuid().ToString();
@@ -80,9 +48,11 @@ namespace serverlessPromoServiceCosmosDB.Functions
                 responseobject.statusCode = 500;
                 responseobject.statusReason = "Internal Server Error";
                 responseobject.success = false;
+               
                 return new BadRequestObjectResult(responseobject);
             }
-           // return new OkObjectResult(productpromo);
         }
+               
+        
     }
 }
